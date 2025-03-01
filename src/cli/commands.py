@@ -48,8 +48,6 @@ def main():
         api_key_parser = subparsers.add_parser("set-api-key", help="Set your OpenRouter API key.")
         api_key_parser.add_argument("key", type=str, help="Your OpenRouter API key.")
 
-        # Capture direct question without a subcommand
-        parser.add_argument("input", nargs="?", help="Direct question (without using 'question' command).")
 
         # Parse arguments
         args = parser.parse_args()

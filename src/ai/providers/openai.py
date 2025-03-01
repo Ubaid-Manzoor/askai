@@ -10,6 +10,7 @@ class AiInterface(Enum):
 class AIModels(Enum):
     DEEPSEEKR1 = "deepseek/deepseek-r1:free"
     DEEPSEEKR1_70 = "deepseek/deepseek-r1-distill-llama-70b:free"
+    DEEPSEEKV3 = "deepseek/deepseek-chat:free"
 
 class AIClient:
     """
@@ -26,7 +27,7 @@ class OpenRouterClient(AIClient):
     """
     Client for interacting with OpenRouter, which provides a unified interface for multiple LLMs.
     """
-    def __init__(self, model: str = AIModels.DEEPSEEKR1_70.value, api_key: Optional[str] = None):
+    def __init__(self, model: str = AIModels.DEEPSEEKV3.value, api_key: Optional[str] = None):
         """
         Initialize the OpenRouter client.
 
@@ -56,7 +57,7 @@ class OpenRouterClient(AIClient):
         # Make the API request
         completion = self.client.chat.completions.create(
             model=self.model,
-            messages = [
+            messages=[
                 {
                     "role": "system",
                     "content": """
@@ -69,7 +70,11 @@ class OpenRouterClient(AIClient):
                     }
                     2. If there are **multiple correct answers**, return them as:
                     {
-                        "data": ["answer1", "answer2", "answer3"]
+                        "data": [
+                            "answer1",
+                            "answer2",
+                            "answer3" 
+                        ]
                     }
                     3. **No extra explanation or commentary**—only return the required answer in the specified format.
                     4. If no language is mentioned, provide answers for the **5 most common languages**:
@@ -79,9 +84,9 @@ class OpenRouterClient(AIClient):
 
                     - Input: "How do I reverse an array in Python?"
                     Output:
-                        {
-                            "data": ["arr.reverse()"]
-                        }
+                    {
+                        "data": ["arr.reverse()"]
+                    }
 
                     - Input: "How do I reverse an array?"
                     Output:
@@ -94,13 +99,34 @@ class OpenRouterClient(AIClient):
                             "TypeScript: arr.reverse()"
                         ]
                     }
-                    """,
+                    """
                 },
                 {
-            "role": "user",
-            "content": f"{question}",
-        },]
-            ,
+                    "role": "user",
+                    "content": f"{question}",
+                },
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "data_array",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "description": "An array of strings containing the AI response",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": ["data"],
+                        "additionalProperties": False
+                    }
+                }
+            },
         )
         return format_ai_response(completion.choices[0].message.content)
 
